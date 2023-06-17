@@ -3,8 +3,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import RegistrationScreen from "./screens/auth/RegistrationScreen";
 import LoginScreen from "./screens/auth/LoginScreen";
 import Home from "./screens/mainScreen/Home";
+import MapScreen from "./screens/nestedScreens/MapScreen";
 
 const AuthStack = createStackNavigator();
+const MainStack = createStackNavigator();
 
 export const useRoute = (isAuth) => {
   if (!isAuth) {
@@ -23,5 +25,14 @@ export const useRoute = (isAuth) => {
       </AuthStack.Navigator>
     );
   }
-  return <Home />;
+  return (
+    <MainStack.Navigator>
+      <MainStack.Screen
+        options={{ headerShown: false }}
+        name="Home"
+        component={Home}
+      />
+      <MainStack.Screen name="Map" component={MapScreen} />
+    </MainStack.Navigator>
+  );
 };

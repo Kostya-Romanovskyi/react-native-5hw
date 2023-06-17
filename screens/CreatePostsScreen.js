@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollView } from "react-native";
+import { Camera } from "expo-camera";
+import * as Location from "expo-location";
 
 import {
   StyleSheet,
@@ -20,16 +22,53 @@ const initialState = {
   area: "",
 };
 
-const CreatePostsScreen = () => {
+const CreatePostsScreen = ({ navigation }) => {
   const [state, setState] = useState(initialState);
   const [isShowKeyboard, setIsShowKeyboard] = useState(true);
+  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [location, setLocation] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [photo, setPhoto] = useState(null);
 
-  const keybordHideOnSubmit = () => {
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setLocation(coords);
+    })();
+  }, []);
+
+  if (permission === null) {
+    return <View />;
+  }
+  if (permission === false) {
+    return <Text>No access to camera</Text>;
+  }
+
+  const takePhoto = async () => {
+    const photo = await camera.takePictureAsync();
+    console.log("camera", photo.uri);
+    setPhoto(photo.uri);
+  };
+
+  const sendPhoto = () => {
     setIsShowKeyboard(false);
     Keyboard.dismiss();
     setState(initialState);
     console.log(state);
-    console.log(Platform.OS);
+    console.log("nav", navigation);
+    navigation.navigate("DefaultScreen", { photo, ...state, ...location });
+    console.log("location", location);
+
+    setPhoto(null);
   };
 
   const unreadValues = () => {
@@ -53,13 +92,21 @@ const CreatePostsScreen = () => {
         </View>
 
         <ScrollView style={styles.form}>
-          <View style={styles.photo}>
-            <Image
-              style={styles.photoBtn}
-              source={require("../assets/images/photoBtn.png")}
-            />
-          </View>
-          <Text style={styles.loadPhoto}>Завантажити фото</Text>
+          <Camera style={styles.camera} ref={setCamera}>
+            {photo && (
+              <View style={styles.takePhotoContainer}>
+                <Image source={{ uri: photo }} style={styles.takenPhoto} />
+              </View>
+            )}
+
+            <TouchableOpacity onPress={takePhoto}>
+              <Image source={require("../assets/images/photoBtn.png")} />
+            </TouchableOpacity>
+          </Camera>
+
+          <TouchableOpacity>
+            <Text style={styles.loadPhoto}>Завантажити фото</Text>
+          </TouchableOpacity>
 
           <View>
             <TextInput
@@ -102,7 +149,7 @@ const CreatePostsScreen = () => {
           <TouchableOpacity
             style={{ ...styles.publishBtn }}
             activeOpacity={0.7}
-            onPress={keybordHideOnSubmit}>
+            onPress={sendPhoto}>
             <Text style={styles.textBtn}>Опубліковати</Text>
           </TouchableOpacity>
           <View style={styles.trashWrapper}>
@@ -148,19 +195,25 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     display: "flex",
   },
-  photo: {
+  camera: {
     position: "relative",
-    marginTop: 32,
-    marginBottom: 8,
-    width: "100%",
-    height: 200,
-    backgroundColor: "#F6F6F6",
+    marginTop: 50,
+    height: 300,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  photoBtn: {
+  takePhotoContainer: {
     position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: [{ translateX: -35 }, { translateY: -25 }],
+    top: 0,
+    left: 0,
+    borderWidth: 1,
+    borderColor: "#fff",
+    width: "100%",
+    height: "50%",
+  },
+  takenPhoto: {
+    width: "100%",
+    height: "100%",
   },
   loadPhoto: {
     marginBottom: 48,

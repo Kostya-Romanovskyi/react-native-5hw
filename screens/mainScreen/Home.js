@@ -1,4 +1,5 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 
 import { Ionicons } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
@@ -7,6 +8,9 @@ import PostsScreen from "../PostsScreen";
 import CreatePostsScreen from "../CreatePostsScreen";
 import ProfileScreen from "../ProfileScreen";
 
+import MapScreen from "../nestedScreens/MapScreen";
+
+const PostsNav = createStackNavigator();
 const MainTab = createBottomTabNavigator();
 
 const Home = () => {
@@ -34,7 +38,7 @@ const Home = () => {
             ),
             headerShown: false,
           }}
-          name="Post"
+          name="Posts"
           component={PostsScreen}
         />
         <MainTab.Screen
